@@ -184,11 +184,12 @@ public class ActivityMain extends AppCompatActivity {
         super.onBackPressed();
     }
 
-    public static void openAuthFragment() {
-        AuthFragment authFragment = AuthFragment.newInstance();
-        FragmentTransaction transaction = manager.beginTransaction();
-        transaction.replace(R.id.mainReplaceable, authFragment);
-        transaction.addToBackStack(null);
-        transaction.commit();
-    }
+//    Предполагалось использовать для авторизации, но впоследствии для простоты от этой идеи я отказался
+//    public static void openAuthFragment() {
+//        AuthFragment authFragment = AuthFragment.newInstance();
+//        FragmentTransaction transaction = manager.beginTransaction();
+//        transaction.replace(R.id.mainReplaceable, authFragment);
+//        transaction.addToBackStack(null);
+//        transaction.commit();
+//    }
 }
