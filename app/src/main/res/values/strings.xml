@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Switter</string>
+    <string name="preferencesFile">com.ihavenodomain.switter.USER_PREFERENCES</string>
+
+    <string name="badToken">Авторизация не удалась</string>
+
+    <string name="typicalError">Ошибка приложения</string>
+
+    <string name="authAppOnly">Уведомления о новых твитах не настроены и не будут приходить.\nНажми меня, если хочешь их получать.</string>
+    <string name="authOAuthEnabled">Уведомления о новых твитах подключены</string>
+
+    <string name="authNeededInfo">Чтобы получать мгновенные уведомления Твиттера через это супер-приложение, необходимо там авторизоваться.\nЧуть ниже для этого есть специально обученная кнопка.</string>
+    <string name="authButtonText">Авторизоваться</string>
+
+    <string name="noInternet">Интернет-соединение отсутствует</string>
+    <string name="retry">Попробовать ещё раз</string>
+
+    <string name="nowFollowing">(Нажми для истории)\nСейчас Вы читаете:</string>
+
+    <string name="nowLoading">Подгружаю данные: %s запись(ей) за цикл</string>
+
+    <string name="historyTitle">История просмотров</string>
+
+</resources>
