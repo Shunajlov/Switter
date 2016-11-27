@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,13 +18,17 @@ import com.ihavenodomain.switter.ActivityMain;
 import com.ihavenodomain.switter.R;
 import com.ihavenodomain.switter.Tweets.Tweet;
 import com.ihavenodomain.switter.dataManagement.UserData;
-import com.ihavenodomain.switter.forRestApi.TweetRest;
+import com.ihavenodomain.switter.forApi.OAuthRequestParameters;
+import com.ihavenodomain.switter.forApi.TweetRest;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -74,12 +77,6 @@ public class MainReadableFragment extends Fragment {
             userToFollow = getArguments().getString(FOLLOW_PARAM);
         }
         ud = new UserData(getActivity());
-//        FragmentManager fm = ActivityMain.manager;
-//        fm.addOnBackStackChangedListener(() -> {
-//            if (fm.getBackStackEntryCount() == 0 && UserData.getViewsHistory().size() > 1) {
-//                UserData.getViewsHistory().remove(UserData.getViewsHistory().size()-1);
-//            }
-//        });
     }
 
     @Override
@@ -89,19 +86,6 @@ public class MainReadableFragment extends Fragment {
         rvTweets = (RecyclerView) view.findViewById(R.id.rvTweets);
 //        tvNeedAuth = (TextView) view.findViewById(R.id.tvNeedAuth);
         tvCurrentName = (TextView) view.findViewById(R.id.tvCurrentName);
-
-//        if(ud.isAuthenticated())
-//            tvNeedAuth.setText(getString(R.string.authOAuthEnabled));
-//        else
-//            tvNeedAuth.setText(getString(R.string.authAppOnly));
-//
-//        tvNeedAuth.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if(!ud.isAuthenticated())
-//                    ActivityMain.openAuthFragment();
-//            }
-//        });
 
         if((ActivityMain.viewsHistory.size() > 0 &&
                 !ActivityMain.viewsHistory.get(ActivityMain.viewsHistory.size()-1).equals(userToFollow)) ||
@@ -181,11 +165,15 @@ public class MainReadableFragment extends Fragment {
      * Здесь творится нечто невообразимое
      */
     public void loadTweets(boolean overload) {
+
+//        OAuthRequestParameters param = new OAuthRequestParameters("POST", ActivityMain.API_ENDPOINT + "/1.1/statuses/user_timeline.json");
+
         OkHttpClient httpClient = new OkHttpClient.Builder()
                 //здесь я добавил Interceptor для вставки заголовков
                 .addNetworkInterceptor(chain -> {
                     Request request = chain.request().newBuilder()
                             .addHeader("Authorization", "Bearer " + ud.getBearerToken())
+//                            .addHeader("Authorization", param.getHeaderParameters())
                             .build();
                     return chain.proceed(request);
                 })
@@ -249,8 +237,7 @@ public class MainReadableFragment extends Fragment {
                 .setMessage(sb.toString())
                 .setIcon(R.drawable.ic_launcher)
                 .setCancelable(false)
-                .setNegativeButton("OK",
-                        (dialog, id) -> dialog.cancel());
+                .setNegativeButton("OK", (dialogInterface, i) -> dialogInterface.cancel());
         AlertDialog alert = builder.create();
         alert.show();
     }

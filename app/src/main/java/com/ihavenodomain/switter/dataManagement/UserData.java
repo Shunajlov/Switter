@@ -16,18 +16,17 @@ public class UserData {
     private Context ctx;
     private int mode;
     private String prefPath;
-    private boolean authenticated;
     private String bearerToken;
     public static boolean dataLoading;
+    private boolean serviceRunning;
 
-    private static final String AUTHENTICATED = "am_i_authenticated";
+    private static final String SERVICE_RUNNING = "is_service_running";
     private static final String BEARER_TOKEN = "wow_such_app_token";
 
     public UserData(Context ctx) {
         this.ctx = ctx;
         this.prefPath = ctx.getString(R.string.preferencesFile);
         this.mode = Context.MODE_PRIVATE;
-        this.authenticated = isAuthenticated();
     }
 
     public String getBearerToken() {
@@ -40,14 +39,14 @@ public class UserData {
         saveStringPreference(BEARER_TOKEN, bearerToken);
     }
 
-    public boolean isAuthenticated() {
-        authenticated = readBooleanPreference(AUTHENTICATED);
-        return authenticated;
+    public boolean isServiceRunning() {
+        serviceRunning = readBooleanPreference(SERVICE_RUNNING);
+        return serviceRunning;
     }
 
-    public void setAuthenticated(boolean authenticated) {
-        this.authenticated = authenticated;
-        saveBooleanPreference(AUTHENTICATED, authenticated);
+    public void setServiceRunning(boolean serviceRunning) {
+        this.serviceRunning = serviceRunning;
+        saveBooleanPreference(SERVICE_RUNNING, serviceRunning);
     }
 
     /**

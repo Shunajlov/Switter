@@ -1,4 +1,4 @@
-package com.ihavenodomain.switter.forRestApi;
+package com.ihavenodomain.switter.forApi;
 
 import com.ihavenodomain.switter.Tweets.Tweet;
 

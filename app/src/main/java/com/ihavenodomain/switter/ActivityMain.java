@@ -1,8 +1,10 @@
 package com.ihavenodomain.switter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -16,16 +18,15 @@ import android.widget.Toast;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+
 import com.ihavenodomain.switter.dataManagement.UserData;
-import com.ihavenodomain.switter.ohMyFragments.AuthFragment;
+import com.ihavenodomain.switter.forApi.OAuthRequestParameters;
 import com.ihavenodomain.switter.ohMyFragments.mainReadableFragment.MainReadableFragment;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -41,13 +42,28 @@ public class ActivityMain extends AppCompatActivity {
      * без использования OAuth.
      */
 
+    /**
+     * К сожалению, у меня не хватило терпения реализовать собственный класс для использования Streaming API.
+     * Мою попытку можно посмотреть в файлах:
+     * com.ihavenodomain.switter.forApi.OAuthRequestParameters
+     * com.ihavenodomain.switter.forApi.HmacSha1Signature
+     * К сожалению, удачно авторизовать запрос с помощью этого класса не удалось.
+     * Вероятно, где-то допущена ошибка в кодировании и/или прядке следования параметров, а может это
+     * просто typo.
+     */
+
     // Прошу этим не злоупотреблять
     public static final String ACCESS_TOKEN = "799319870370447363-GtKOiUtOgr4dA4z0JO9xyUk9xMYUgP3";
     public static final String ACCESS_TOKEN_SECRET = "Y0jOi5DngSTWJW95lPO5ZiIWHp9nJARISjksbnD83KP5i";
     // =============================================================================================
-    public static final String API_KEY ="1udbuHD44Zv66MafXNIRxLce9"; // Consumer Key
-    public static final String API_SECRET ="soqABY5UZwkEkXvzXEN9d9oA631Cn0oOIDDmFOGeiyLEmIG1r2"; // Consumer Secret
+    public static final String CONSUMER_KEY = "1udbuHD44Zv66MafXNIRxLce9";
+    public static final String CONSUMER_SECRET = "soqABY5UZwkEkXvzXEN9d9oA631Cn0oOIDDmFOGeiyLEmIG1r2";
+    // =============================================================================================
     public static final String DEFAULT_NAME = "KremlinRussia"; // "AlexShunailov";
+    public static final String DEFAULT_ID = "158650448";
+    // id - взято из https://tweeterid.com/
+    // 799319870370447363 - AlexShunailov
+    // 158650448 - KremlinRussia
     public static final String API_ENDPOINT = "https://api.twitter.com";
 
     public static FragmentManager manager;
@@ -55,10 +71,28 @@ public class ActivityMain extends AppCompatActivity {
 
     private UserData ud;
 
+    private static boolean appActive;
+
     private static Context ctx;
 
     public static Context getAppContext() {
         return ctx;
+    }
+
+    public static boolean isAppActive() {
+        return appActive;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        appActive = false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        appActive = true;
     }
 
     @Override
@@ -76,7 +110,7 @@ public class ActivityMain extends AppCompatActivity {
 
         viewsHistory = new ArrayList<>();
 
-        if(isOnline()) {
+        if (isOnline()) {
             initialize();
         } else {
             findViewById(R.id.button).setOnClickListener(view -> initialize());
@@ -87,29 +121,41 @@ public class ActivityMain extends AppCompatActivity {
      * ПОЕХАЛИ
      */
     public void initialize() {
-        if(isOnline()) {
-            String apiKey = API_KEY;
-            String apiSecret = API_SECRET;
+        if (isOnline()) {
+            String apiKey = CONSUMER_KEY;
+            String apiSecret = CONSUMER_SECRET;
+            // Сначала кодируем параметры в UTF-8
             try {
                 apiKey = URLEncoder.encode(apiKey, "UTF-8");
                 apiSecret = URLEncoder.encode(apiSecret, "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
+
             String credentials = apiKey + ":" + apiSecret;
             credentials = Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+
             if (ud.getBearerToken().equals(""))
                 ud.setBearerToken(receiveCorrectBearToken(credentials, ud));
             else {
                 rlLoad.setVisibility(View.GONE);
                 openMainFragment(DEFAULT_NAME);
             }
+
+            if(!ud.isServiceRunning()) {
+                Intent service = new Intent(getApplicationContext(), MyService.class);
+                Log.i("MyService", "Starting service @ " + SystemClock.elapsedRealtime());
+                startService(service);
+            }
+
         } else
             Toast.makeText(this, getString(R.string.noInternet), Toast.LENGTH_SHORT).show();
     }
 
     /**
      * Получим токен для приложения старым способом через volley
+     * Application-Only Authentication
+     *
      * @return готовый ответ от твиттера
      */
     public String receiveCorrectBearToken(final String credentials, final UserData ud) {
@@ -126,8 +172,7 @@ public class ActivityMain extends AppCompatActivity {
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), getString(R.string.badToken), Toast.LENGTH_SHORT).show();
             }
-        }, error -> Log.e("onErrorResponse", error.toString()))
-        {
+        }, error -> Log.e("onErrorResponse", error.toString())) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
@@ -148,7 +193,7 @@ public class ActivityMain extends AppCompatActivity {
                     return null;
                 }
             }
-            };
+        };
 
         queue.add(jsonObjectRequest);
         return answer;
@@ -156,6 +201,7 @@ public class ActivityMain extends AppCompatActivity {
 
     /**
      * Проверяет есть ли интернет
+     *
      * @return есть или нет
      */
     public boolean isOnline() {
@@ -168,7 +214,7 @@ public class ActivityMain extends AppCompatActivity {
     public static void openMainFragment(String userName) {
         MainReadableFragment mainFragment = MainReadableFragment.newInstance(userName);
         FragmentTransaction transaction = manager.beginTransaction();
-        if(viewsHistory.size() != 0) {
+        if (viewsHistory.size() != 0) {
             transaction.addToBackStack(null);
         }
         transaction.replace(R.id.mainReplaceable, mainFragment);
@@ -179,17 +225,8 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(viewsHistory.size() > 0)
-            viewsHistory.remove(viewsHistory.size()-1);
+        if (viewsHistory.size() > 0)
+            viewsHistory.remove(viewsHistory.size() - 1);
         super.onBackPressed();
     }
-
-//    Предполагалось использовать для авторизации, но впоследствии для простоты от этой идеи я отказался
-//    public static void openAuthFragment() {
-//        AuthFragment authFragment = AuthFragment.newInstance();
-//        FragmentTransaction transaction = manager.beginTransaction();
-//        transaction.replace(R.id.mainReplaceable, authFragment);
-//        transaction.addToBackStack(null);
-//        transaction.commit();
-//    }
 }
