@@ -19,3 +19,9 @@ Simple Twitter app
 
 P.S. ключи, зашитые в коде, настоящие, у приложения установлены права только на чтение, а сам я твиттером не пользуюсь. 
 Позже сгенерирую ключи заново чтобы инвалидировать используемые. 
+
+Пара скриншотов:
+![alt tag](https://github.com/Shunajlov/Switter/blob/master/2016-11-24%2016.02.30.png)
+![alt tag](https://github.com/Shunajlov/Switter/blob/master/2016-11-24%2015.56.04.png)
+![alt tag](https://github.com/Shunajlov/Switter/blob/master/2016-11-24%2015.55.47.png)
+![alt tag](https://github.com/Shunajlov/Switter/blob/master/2016-11-24%2015.55.24.png)
